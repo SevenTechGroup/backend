@@ -99,8 +99,19 @@ La commande suivante est idempotente :
 php artisan db:seed
 ```
 
-Elle installe 5 catégories et 3 territoires sans créer de compte avec un mot de
-passe connu.
+En environnement local, elle installe 5 catégories, 3 territoires et un jeu de
+démonstration complet : 3 utilisateurs, 6 signalements, 4 affectations et 6
+notifications. Une seconde exécution met les données à jour sans créer de
+doublon.
+
+| Rôle | Identifiant | Mot de passe |
+| --- | --- | --- |
+| Manager | `manager@sahelsignal.local` | `Manager@2026!` |
+| Agent | `agent@sahelsignal.local` | `Agent@2026!` |
+| Citoyen | `citoyen@sahelsignal.local` | `Citoyen@2026!` |
+
+Ces comptes sont exclusivement réservés au développement. Le seeder refuse de
+s’exécuter en dehors des environnements `local` et `testing`.
 
 ## Contrôles qualité
 
