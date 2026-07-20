@@ -58,6 +58,7 @@ class ApiValidationTest extends TestCase
     public function test_report_creation_rejects_invalid_domain_values(): void
     {
         $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'validation-invalid-domain-values')
             ->postJson('/api/reports', [
                 'title' => 'Test',
                 'description' => 'Trop courte',
@@ -84,6 +85,7 @@ class ApiValidationTest extends TestCase
         ]);
 
         $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'validation-inactive-references')
             ->postJson('/api/reports', [
                 'title' => 'Référence inactive',
                 'description' => 'Description suffisamment longue pour être valide.',

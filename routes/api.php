@@ -24,7 +24,7 @@ Route::middleware('throttle:60,1')->group(function () {
 
 Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
     Route::get('/reports', [ReportController::class, 'index']);
-    Route::post('/reports', [ReportController::class, 'store']);
+    Route::post('/reports', [ReportController::class, 'store'])->middleware('idempotency');
     Route::get('/reports/{report}', [ReportController::class, 'show']);
     Route::put('/reports/{report}', [ReportController::class, 'update']);
 
