@@ -23,7 +23,7 @@ class ReportController extends Controller
 
     public function store(StoreReportRequest $request): JsonResponse
     {
-        $report = $this->reportService->createReport($request->validated(), auth('api')->id());
+        $report = $this->reportService->createReport($request->validated(), $request->user()->id);
 
         return response()->json(['message' => 'Report created', 'data' => $report], 201);
     }

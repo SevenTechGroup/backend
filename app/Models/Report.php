@@ -6,6 +6,7 @@ use App\Enums\ReportStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Report extends Model
 {
@@ -29,6 +30,21 @@ class Report extends Model
     public function assignments(): HasMany
     {
         return $this->hasMany(Assignment::class);
+    }
+
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(Attachment::class);
+    }
+
+    public function location(): HasOne
+    {
+        return $this->hasOne(ReportLocation::class);
+    }
+
+    public function consentRecords(): HasMany
+    {
+        return $this->hasMany(ConsentRecord::class);
     }
 
     public function canTransitionTo(ReportStatus $nextStatus): bool

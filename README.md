@@ -25,6 +25,23 @@ Configurer au préalable dans `.env` les variables `DB_HOST`, `DB_PORT`,
 `DB_DATABASE`, `DB_USERNAME` et `DB_PASSWORD`. Ne jamais versionner `.env`,
 `APP_KEY` ou `JWT_SECRET`.
 
+### Stockage des fichiers avec Cloudinary
+
+Toutes les pièces jointes passent par Laravel et sont stockées dans Cloudinary.
+Le frontend ne reçoit jamais la clé secrète. Renseigner dans `backend/.env` :
+
+```dotenv
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+CLOUDINARY_FOLDER=sahel-signal
+```
+
+Les ressources sont envoyées avec le type de livraison `authenticated`. La base
+conserve uniquement les métadonnées Cloudinary, le type MIME, la taille et le nom
+d’origine. Aucun contenu binaire n’est enregistré dans PostgreSQL ou sur le disque
+public du serveur.
+
 Vérification rapide :
 
 ```bash
@@ -85,11 +102,12 @@ Puis lancer :
 composer test
 ```
 
-État vérifié : **26 tests, 151 assertions, 100 % réussis**.
+État vérifié : **29 tests, 174 assertions, 100 % réussis**.
 
 La suite couvre notamment l’authentification, les workflows, les validations,
 les transitions, le cloisonnement entre utilisateurs, les rôles, les
-notifications, le tableau de bord et la limitation des tentatives de connexion.
+notifications, le tableau de bord, les preuves Cloudinary, le consentement GPS et
+la limitation des tentatives de connexion.
 
 ## Données de référence
 

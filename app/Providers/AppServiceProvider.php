@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Contracts\AssetStorage;
 use App\Models\Assignment;
 use App\Models\Notification;
 use App\Models\Report;
 use App\Policies\AssignmentPolicy;
 use App\Policies\NotificationPolicy;
 use App\Policies\ReportPolicy;
+use App\Services\CloudinaryAssetStorage;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -18,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(AssetStorage::class, CloudinaryAssetStorage::class);
     }
 
     /**

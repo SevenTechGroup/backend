@@ -36,6 +36,18 @@ class StoreReportRequest extends FormRequest
             ],
             'location_text' => ['sometimes', 'nullable', 'string', 'max:500'],
             'priority' => ['sometimes', 'required', Rule::enum(ReportPriority::class)],
+            'photo' => [
+                'sometimes',
+                'nullable',
+                'file',
+                'mimetypes:image/jpeg,image/png,image/webp',
+                'max:1536',
+            ],
+            'coordinates' => ['sometimes', 'array'],
+            'coordinates.latitude' => ['required_with:coordinates', 'numeric', 'between:-90,90'],
+            'coordinates.longitude' => ['required_with:coordinates', 'numeric', 'between:-180,180'],
+            'coordinates.accuracy' => ['required_with:coordinates', 'numeric', 'min:0', 'max:100000'],
+            'location_consent_accepted' => ['exclude_without:coordinates', 'required', 'accepted'],
         ];
     }
 }
