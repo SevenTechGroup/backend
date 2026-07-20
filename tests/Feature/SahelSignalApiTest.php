@@ -62,6 +62,7 @@ class SahelSignalApiTest extends TestCase
             ->assertJsonCount(1, 'data');
 
         $reportResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->withHeader('X-Idempotency-Key', 'api-report-create')
             ->postJson('/api/reports', [
                 'title' => 'Déchet sauvage',
                 'description' => 'Un dépôt sauvage est visible devant la mairie.',

@@ -112,6 +112,7 @@ class SahelSignalCompleteMVPTest extends TestCase
     {
         // Créer un signalement
         $report = $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->withHeader('X-Idempotency-Key', 'mvp-report-workflow-create')
             ->postJson('/api/reports', [
                 'title' => 'Déchet sauvage',
                 'description' => 'Un dépôt de déchets dangereux en centre ville',
@@ -261,6 +262,7 @@ class SahelSignalCompleteMVPTest extends TestCase
     public function test_validation_errors()
     {
         $this->withHeader('Authorization', 'Bearer '.$this->token)
+            ->withHeader('X-Idempotency-Key', 'mvp-report-validation-error')
             ->postJson('/api/reports', [
                 'title' => '',
                 'description' => '',
