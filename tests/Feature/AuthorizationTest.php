@@ -108,7 +108,11 @@ class AuthorizationTest extends TestCase
                 'notes' => 'Prise en charge',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.user_id', $this->agent->id);
+            ->assertJsonPath('data.user_id', $this->agent->id)
+            ->assertJsonPath('data.report.title', $this->otherReport->title)
+            ->assertJsonPath('data.report.category.name', 'Déchets')
+            ->assertJsonPath('data.report.territory.name', 'Dakar')
+            ->assertJsonPath('data.user.name', $this->agent->name);
     }
 
     public function test_only_manager_can_list_agents_for_assignment_creation(): void
@@ -174,6 +178,8 @@ class AuthorizationTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['id' => $ownAssignment->id])
+            ->assertJsonPath('data.0.report.category.name', 'Déchets')
+            ->assertJsonPath('data.0.report.territory.name', 'Dakar')
             ->assertJsonMissing(['id' => $otherAssignment->id]);
 
         $this->actingAs($this->agent, 'api')

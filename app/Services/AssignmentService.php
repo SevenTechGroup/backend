@@ -18,7 +18,7 @@ class AssignmentService
                 $user->hasRole(UserRole::Agent),
                 fn ($query) => $query->where('user_id', $user->id),
             )
-            ->with(['report', 'user'])
+            ->with(['report.category', 'report.territory', 'user'])
             ->latest()
             ->get();
     }
@@ -30,10 +30,10 @@ class AssignmentService
 
             Notification::create([
                 'user_id' => $data['user_id'],
-                'message' => 'Un nouveau dossier vous a été assigné.',
+                'message' => 'Un nouveau signalement vous a été confié.',
             ]);
 
-            return $assignment;
+            return $assignment->load(['report.category', 'report.territory', 'user']);
         });
     }
 
@@ -41,13 +41,13 @@ class AssignmentService
     {
         $assignment->update($data);
 
-        return $assignment->fresh(['report', 'user']);
+        return $assignment->fresh(['report.category', 'report.territory', 'user']);
     }
 
     public function getAssignmentsByUser(int $userId): Collection
     {
         return Assignment::where('user_id', $userId)
-            ->with('report')
+            ->with(['report.category', 'report.territory'])
             ->latest()
             ->get();
     }
