@@ -236,4 +236,13 @@ class FakeAssetStorage implements AssetStorage
     {
         // No-op in feature tests.
     }
+
+    public function signedUrl(
+        string $publicId,
+        string $resourceType,
+        string $deliveryType,
+        ?string $format = null,
+    ): string {
+        return 'https://res.cloudinary.com/demo/image/authenticated/s--signature--/evidence-123.jpg';
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssignmentController;
+use App\Http\Controllers\AttachmentController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
@@ -24,6 +25,7 @@ Route::middleware('throttle:60,1')->group(function () {
 });
 
 Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
+    Route::get('/attachments/{attachment}/content', [AttachmentController::class, 'show']);
     Route::get('/reports', [ReportController::class, 'index']);
     Route::post('/reports', [ReportController::class, 'store'])->middleware('idempotency');
     Route::get('/reports/{report}', [ReportController::class, 'show']);

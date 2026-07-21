@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Contracts\AssetStorage;
+use Cloudinary\Cloudinary;
 use Illuminate\Http\UploadedFile;
 use RuntimeException;
 use Throwable;
@@ -10,6 +11,8 @@ use Throwable;
 class CloudinaryAssetStorage implements AssetStorage
 {
     private ?CloudinaryUploadApi $client = null;
+
+    private ?Cloudinary $cloudinary = null;
 
     public function upload(UploadedFile $file, string $folder): array
     {
@@ -55,16 +58,62 @@ class CloudinaryAssetStorage implements AssetStorage
         ]);
     }
 
+    public function signedUrl(
+        string $publicId,
+        string $resourceType,
+        string $deliveryType,
+        ?string $format = null,
+    ): string {
+        try {
+            $asset = match ($resourceType) {
+                'image' => $this->cloudinary()->image($publicId),
+                'video' => $this->cloudinary()->video($publicId),
+                default => $this->cloudinary()->raw($publicId),
+            };
+
+            $asset->deliveryType($deliveryType)->signUrl();
+
+            if ($format) {
+                $asset->extension($format);
+            }
+
+            return (string) $asset->toUrl();
+        } catch (Throwable $exception) {
+            throw new RuntimeException(
+                'La preuve photographique est momentanément indisponible.',
+                previous: $exception,
+            );
+        }
+    }
+
     private function client(): CloudinaryUploadApi
     {
         if ($this->client) {
             return $this->client;
         }
 
+        return $this->client = new CloudinaryUploadApi(
+            $this->configuration(),
+            $this->caBundle(),
+        );
+    }
+
+    private function cloudinary(): Cloudinary
+    {
+        return $this->cloudinary ??= new Cloudinary($this->configuration());
+    }
+
+    /**
+     * @return array{
+     *     cloud: array{cloud_name: string, api_key: string, api_secret: string},
+     *     url: array{secure: true}
+     * }
+     */
+    private function configuration(): array
+    {
         $cloudName = (string) config('services.cloudinary.cloud_name');
         $apiKey = (string) config('services.cloudinary.api_key');
         $apiSecret = (string) config('services.cloudinary.api_secret');
-        $caBundle = trim((string) config('services.cloudinary.ca_bundle'));
 
         if ($cloudName === '' || $apiKey === '' || $apiSecret === '') {
             throw new RuntimeException(
@@ -72,17 +121,24 @@ class CloudinaryAssetStorage implements AssetStorage
             );
         }
 
-        if ($caBundle !== '' && ! is_file($caBundle)) {
-            throw new RuntimeException('Le certificat CA configuré pour Cloudinary est introuvable.');
-        }
-
-        return $this->client = new CloudinaryUploadApi([
+        return [
             'cloud' => [
                 'cloud_name' => $cloudName,
                 'api_key' => $apiKey,
                 'api_secret' => $apiSecret,
             ],
             'url' => ['secure' => true],
-        ], $caBundle !== '' ? $caBundle : null);
+        ];
+    }
+
+    private function caBundle(): ?string
+    {
+        $caBundle = trim((string) config('services.cloudinary.ca_bundle'));
+
+        if ($caBundle !== '' && ! is_file($caBundle)) {
+            throw new RuntimeException('Le certificat CA configuré pour Cloudinary est introuvable.');
+        }
+
+        return $caBundle !== '' ? $caBundle : null;
     }
 }

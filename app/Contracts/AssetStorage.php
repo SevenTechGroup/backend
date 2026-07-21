@@ -25,4 +25,11 @@ interface AssetStorage
     public function upload(UploadedFile $file, string $folder): array;
 
     public function delete(string $publicId, string $resourceType, string $deliveryType): void;
+
+    public function signedUrl(
+        string $publicId,
+        string $resourceType,
+        string $deliveryType,
+        ?string $format = null,
+    ): string;
 }
