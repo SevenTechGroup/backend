@@ -6,10 +6,16 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\RealtimeConfigController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\TerritoryController;
 use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
+
+Broadcast::routes(['middleware' => ['auth:api', 'throttle:60,1']]);
+
+require __DIR__.'/channels.php';
 
 Route::middleware('throttle:10,1')->group(function () {
     Route::post('/auth/register', [AuthController::class, 'register']);
@@ -37,6 +43,7 @@ Route::middleware(['auth:api', 'throttle:60,1'])->group(function () {
 
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/realtime/config', RealtimeConfigController::class);
 
     Route::get('/dashboard', [DashboardController::class, 'index']);
     Route::get('/agents', [UserController::class, 'agents']);
