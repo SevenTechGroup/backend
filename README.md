@@ -141,6 +141,8 @@ php artisan test
 
 ## Sécurité avant production
 
+- suivre la procédure [Laravel Cloud](./docs/LARAVEL_CLOUD.md) pour la base,
+  les commandes et les variables de l’environnement ;
 - utiliser des secrets distincts et non versionnés par environnement ;
 - désactiver `APP_DEBUG` en production ;
 - terminer la configuration TLS, sauvegardes, supervision et rotation des logs ;

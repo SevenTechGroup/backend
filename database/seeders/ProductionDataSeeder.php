@@ -4,13 +4,13 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 
-class DatabaseSeeder extends Seeder
+class ProductionDataSeeder extends Seeder
 {
     public function run(): void
     {
         $this->call([
-            ProductionDataSeeder::class,
-            DemoDataSeeder::class,
+            TerritorySeeder::class,
+            CategorySeeder::class,
         ]);
     }
 }
