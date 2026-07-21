@@ -37,6 +37,20 @@ php artisan db:seed --class=ProductionDataSeeder --force
 nécessaires au fonctionnement de l’application. Il est idempotent et ne crée
 aucun compte de démonstration.
 
+Pour installer volontairement les comptes et données de démonstration, définir
+les cinq variables `PRODUCTION_DEMO_*_PASSWORD` décrites dans `.env.example`,
+puis exécuter une seule fois :
+
+```bash
+php artisan db:seed --class=ProductionDemoSeeder --force
+```
+
+Ce seeder est idempotent. Il crée un manager, un intervenant (rôle technique
+`agent`), trois citoyens, six signalements, quatre affectations et sept
+notifications. Les mots de passe doivent être distincts, contenir au moins
+16 caractères et rester exclusivement dans le gestionnaire de secrets de
+Laravel Cloud.
+
 ## 3. Variables de production
 
 Ajouter les variables suivantes dans **Environment → Settings → Environment
@@ -89,4 +103,3 @@ curl --fail https://<domaine-api>.laravel.cloud/api/territories
 Les deux dernières routes doivent retourner respectivement cinq catégories et
 trois territoires. Activer ensuite les sauvegardes PostgreSQL et surveiller les
 erreurs dans l’onglet **Logs** de Laravel Cloud.
-
