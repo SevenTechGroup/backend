@@ -129,6 +129,66 @@ class ReportEvidenceTest extends TestCase
         $this->assertNull($this->assetStorage->uploadedFile);
     }
 
+    public function test_equivalent_multipart_retry_replays_the_original_report(): void
+    {
+        $first = $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'evidence-multipart-replay')
+            ->post('/api/reports', [
+                ...$this->validReportPayload(),
+                'photo' => UploadedFile::fake()->image('preuve.jpg', 640, 480),
+                'coordinates' => [
+                    'longitude' => -17.4677,
+                    'accuracy' => 18.4,
+                    'latitude' => 14.7167,
+                ],
+                'location_consent_accepted' => true,
+            ])
+            ->assertCreated();
+
+        $replay = $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'evidence-multipart-replay')
+            ->post('/api/reports', [
+                'location_consent_accepted' => true,
+                'coordinates' => [
+                    'latitude' => 14.7167,
+                    'accuracy' => 18.4,
+                    'longitude' => -17.4677,
+                ],
+                'photo' => UploadedFile::fake()->image('preuve.jpg', 640, 480),
+                ...$this->validReportPayload(),
+            ])
+            ->assertCreated();
+
+        $this->assertSame($first->getContent(), $replay->getContent());
+        $this->assertDatabaseCount('reports', 1);
+        $this->assertDatabaseCount('attachments', 1);
+        $this->assertSame(1, $this->assetStorage->uploadCount);
+    }
+
+    public function test_multipart_retry_with_a_different_photo_is_rejected(): void
+    {
+        $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'evidence-multipart-conflict')
+            ->post('/api/reports', [
+                ...$this->validReportPayload(),
+                'photo' => UploadedFile::fake()->image('preuve.jpg', 640, 480),
+            ])
+            ->assertCreated();
+
+        $this->actingAs($this->citizen, 'api')
+            ->withHeader('X-Idempotency-Key', 'evidence-multipart-conflict')
+            ->post('/api/reports', [
+                ...$this->validReportPayload(),
+                'photo' => UploadedFile::fake()->image('preuve.jpg', 800, 600),
+            ])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'Conflit de clé d\'idempotence.');
+
+        $this->assertDatabaseCount('reports', 1);
+        $this->assertDatabaseCount('attachments', 1);
+        $this->assertSame(1, $this->assetStorage->uploadCount);
+    }
+
     private function validReportPayload(): array
     {
         return [
@@ -148,8 +208,11 @@ class FakeAssetStorage implements AssetStorage
 
     public ?string $uploadedFolder = null;
 
+    public int $uploadCount = 0;
+
     public function upload(UploadedFile $file, string $folder): array
     {
+        $this->uploadCount++;
         $this->uploadedFile = $file;
         $this->uploadedFolder = $folder;
 

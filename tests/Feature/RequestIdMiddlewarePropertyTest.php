@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\RequestIdMiddleware;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -21,7 +20,7 @@ class RequestIdMiddlewarePropertyTest extends TestCase
 {
     private const HEADER = 'X-Request-ID';
 
-    private const ROUTE = '/_test/request-id';
+    private const ROUTE = '/api/_test/request-id';
 
     /**
      * Motif d'un X-Request-ID valide, identique à celui du middleware.
@@ -42,10 +41,8 @@ class RequestIdMiddlewarePropertyTest extends TestCase
     {
         parent::setUp();
 
-        // Le middleware n'est pas encore enregistré globalement (tâche 6) :
-        // on définit une route ad-hoc enveloppée par le middleware sous test.
-        Route::middleware(RequestIdMiddleware::class)
-            ->get(self::ROUTE, fn () => response()->json(['ok' => true]));
+        // La route ad-hoc vérifie l'enregistrement global du middleware.
+        Route::get(self::ROUTE, fn () => response()->json(['ok' => true]));
     }
 
     /**

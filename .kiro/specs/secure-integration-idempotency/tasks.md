@@ -48,7 +48,7 @@ Plan d'implémentation de la fonctionnalité `secure-integration-idempotency` su
 - [x] 5. Middleware d'idempotence
 - [x] 5.1 Implémenter `IdempotencyMiddleware`
   - Créer `app/Http/Middleware/IdempotencyMiddleware.php`
-  - Valider la clé (1..128 → sinon 422), calculer l'empreinte SHA-256 du corps
+  - Valider la clé (1..128 → sinon 422), calculer l'empreinte SHA-256 canonique des champs et fichiers (indépendante de la boundary multipart)
   - Transaction + `lockForUpdate` : rejeu si `completed`+empreinte identique, 422 si empreinte différente, 409 si `processing`, sinon créer puis exécuter `$next` et enregistrer la réponse ; purge si expirée ; suppression si réponse d'erreur
   - _Requirements: 3.2, 3.3, 3.6, 3.7, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8_
 - [x] 5.2 Tests d'idempotence

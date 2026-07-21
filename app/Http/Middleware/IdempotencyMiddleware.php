@@ -6,6 +6,9 @@ use App\Models\IdempotencyKey;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use JsonException;
+use RuntimeException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -48,8 +51,9 @@ class IdempotencyMiddleware
             );
         }
 
-        // Empreinte du corps pour détecter les corps divergents (R4.5).
-        $fingerprint = hash('sha256', $request->getContent());
+        // Empreinte canonique pour rester stable entre deux encodages multipart
+        // équivalents (la boundary HTTP change à chaque nouvelle tentative).
+        $fingerprint = $this->fingerprint($request);
 
         return DB::transaction(function () use ($request, $next, $key, $fingerprint) {
             $record = IdempotencyKey::where('key', $key)
@@ -115,5 +119,87 @@ class IdempotencyMiddleware
             'response_body' => $body,
             'report_id' => data_get(json_decode($body, true), 'data.id'),
         ]);
+    }
+
+    /**
+     * Produit une empreinte sémantique des champs et fichiers reçus.
+     *
+     * @throws JsonException
+     */
+    private function fingerprint(Request $request): string
+    {
+        $input = $request->isJson()
+            ? $request->json()->all()
+            : $request->request->all();
+
+        $payload = $this->canonicalize([
+            'input' => $input,
+            'files' => $this->fingerprintFiles($request->allFiles()),
+        ]);
+
+        return hash('sha256', json_encode(
+            $payload,
+            JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION,
+        ));
+    }
+
+    /**
+     * @param  array<string, UploadedFile|array>  $files
+     * @return array<string, mixed>
+     */
+    private function fingerprintFiles(array $files): array
+    {
+        $fingerprints = [];
+
+        foreach ($files as $field => $file) {
+            $fingerprints[$field] = is_array($file)
+                ? $this->fingerprintFiles($file)
+                : $this->fingerprintFile($file);
+        }
+
+        return $fingerprints;
+    }
+
+    /**
+     * @return array<string, int|string|null>
+     */
+    private function fingerprintFile(UploadedFile $file): array
+    {
+        $contentHash = null;
+        $path = $file->getPathname();
+
+        if ($file->getError() === UPLOAD_ERR_OK && is_file($path)) {
+            $contentHash = hash_file('sha256', $path);
+            if ($contentHash === false) {
+                throw new RuntimeException('Impossible de calculer l\'empreinte du fichier envoyé.');
+            }
+        }
+
+        return [
+            'client_mime_type' => $file->getClientMimeType(),
+            'error' => $file->getError(),
+            'name' => $file->getClientOriginalName(),
+            'sha256' => $contentHash,
+            'size' => $file->getSize(),
+        ];
+    }
+
+    private function canonicalize(mixed $value): mixed
+    {
+        if (! is_array($value)) {
+            return $value;
+        }
+
+        if (array_is_list($value)) {
+            return array_map(fn (mixed $item) => $this->canonicalize($item), $value);
+        }
+
+        ksort($value, SORT_STRING);
+
+        foreach ($value as $key => $item) {
+            $value[$key] = $this->canonicalize($item);
+        }
+
+        return $value;
     }
 }

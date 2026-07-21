@@ -2,13 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Http\Middleware\CorsMiddleware;
 use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class CorsMiddlewareTest extends TestCase
 {
-    private const ROUTE = '/_test/cors';
+    private const ROUTE = '/api/_test/cors';
 
     private const ALLOWED_ORIGIN = 'https://app.example.tld';
 
@@ -24,12 +23,10 @@ class CorsMiddlewareTest extends TestCase
     {
         parent::setUp();
 
-        // Le middleware n'est pas encore enregistré globalement (tâche 6) :
-        // on définit une route ad-hoc enveloppée par le middleware sous test.
+        // La route ad-hoc vérifie l'enregistrement global du middleware.
         // La configuration `cors.*` est lue au moment de la requête, ce qui
         // permet de surcharger `config()` dans chaque test avant l'appel.
-        Route::middleware(CorsMiddleware::class)
-            ->match(['GET', 'POST', 'OPTIONS'], self::ROUTE, fn () => response()->json(['ok' => true]));
+        Route::match(['GET', 'POST', 'OPTIONS'], self::ROUTE, fn () => response()->json(['ok' => true]));
     }
 
     /**
@@ -95,6 +92,26 @@ class CorsMiddlewareTest extends TestCase
 
         $this->assertTrue($response->headers->has(self::HEADER_ALLOW_HEADERS));
         $this->assertNotEmpty($response->headers->get(self::HEADER_ALLOW_HEADERS));
+    }
+
+    public function test_real_api_preflight_is_handled_before_routing_and_authentication(): void
+    {
+        config()->set('cors.allowed_origins', [self::ALLOWED_ORIGIN]);
+
+        $response = $this->withHeaders([
+            'Origin' => self::ALLOWED_ORIGIN,
+            'Access-Control-Request-Method' => 'GET',
+            'Access-Control-Request-Headers' => 'authorization',
+        ])->json('OPTIONS', '/api/auth/me');
+
+        $response->assertNoContent();
+        $this->assertSame(
+            self::ALLOWED_ORIGIN,
+            $response->headers->get(self::HEADER_ALLOW_ORIGIN),
+        );
+        $this->assertTrue($response->headers->has(self::HEADER_ALLOW_METHODS));
+        $this->assertTrue($response->headers->has(self::HEADER_ALLOW_HEADERS));
+        $this->assertTrue($response->headers->has('X-Request-ID'));
     }
 
     /**

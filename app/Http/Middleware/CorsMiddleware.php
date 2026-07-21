@@ -33,6 +33,10 @@ class CorsMiddleware
 
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $request->is('api/*')) {
+            return $next($request);
+        }
+
         $origin = $request->headers->get('Origin');
         $originAllowed = $origin !== null && $this->isOriginAllowed($origin);
 

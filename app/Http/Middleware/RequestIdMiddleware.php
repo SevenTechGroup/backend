@@ -32,6 +32,10 @@ class RequestIdMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (! $request->is('api/*')) {
+            return $next($request);
+        }
+
         $requestId = $this->resolveRequestId($request);
 
         $request->attributes->set('request_id', $requestId);

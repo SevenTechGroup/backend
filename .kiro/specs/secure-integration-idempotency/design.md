@@ -165,7 +165,11 @@ return [
 - Lire `X-Idempotency-Key`, `trim()`.
 - Absente, vide, ou longueur > 128 → `422` avec message « clé d'idempotence absente ou invalide », sans créer de Report (R3.3, R4.6).
 
-**Empreinte du corps :** `hash('sha256', $request->getContent())` pour détecter les corps divergents (R4.5).
+**Empreinte du corps :** SHA-256 d’une représentation canonique des champs et
+des fichiers. Les clés associatives sont triées et chaque fichier est décrit par
+son nom, son type, sa taille, son erreur d’upload et le SHA-256 de son contenu.
+Cette représentation détecte les corps divergents (R4.5) tout en restant stable
+si la boundary d’un formulaire multipart change entre deux tentatives.
 
 **Séquence transactionnelle :**
 ```php
@@ -268,7 +272,7 @@ Document structuré (format ADR) couvrant R5 :
 |---------|------|-----------|------|
 | `id` | bigint | PK auto | Identifiant technique |
 | `key` | varchar(128) | UNIQUE, NOT NULL | Clé `X-Idempotency-Key` (R3.1) |
-| `request_fingerprint` | varchar(64) | NOT NULL | SHA-256 du corps (détection conflit R4.5) |
+| `request_fingerprint` | varchar(64) | NOT NULL | SHA-256 canonique des champs et fichiers (détection conflit R4.5) |
 | `status` | varchar(20) | NOT NULL, défaut `processing` | `processing` \| `completed` |
 | `response_status` | smallint | nullable | Code HTTP enregistré (R3.4, R4.2) |
 | `response_body` | longtext | nullable | Corps de réponse enregistré (R3.4, R4.2) |

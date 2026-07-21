@@ -20,12 +20,13 @@ return Application::configure(basePath: dirname(__DIR__))
             fn (Request $request): ?string => $request->is('api/*') ? null : '/',
         );
 
-        // Middlewares transverses ajoutés en tête du groupe `api` (ordre significatif) :
+        // Middlewares transverses ajoutés en tête de la pile globale (ordre significatif) :
         //  1. RequestIdMiddleware — résout/génère X-Request-ID en premier, afin que
         //     toutes les entrées de log (y compris CORS) portent la corrélation.
-        //  2. CorsMiddleware — s'exécute avant `auth:api` pour qu'un préflight OPTIONS
-        //     n'exige jamais de jeton.
-        $middleware->api(prepend: [
+        //  2. CorsMiddleware — s'exécute avant le routeur pour qu'un préflight OPTIONS
+        //     visant une route API existante n'exige jamais de correspondance de route
+        //     ni de jeton. Les deux middlewares ignorent les chemins hors `/api`.
+        $middleware->prepend([
             RequestIdMiddleware::class,
             CorsMiddleware::class,
         ]);
