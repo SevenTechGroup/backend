@@ -111,6 +111,28 @@ class AuthorizationTest extends TestCase
             ->assertJsonPath('data.user_id', $this->agent->id);
     }
 
+    public function test_only_manager_can_list_agents_for_assignment_creation(): void
+    {
+        $this->actingAs($this->manager, 'api')
+            ->getJson('/api/agents')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonFragment([
+                'id' => $this->agent->id,
+                'name' => $this->agent->name,
+                'role' => 'agent',
+            ])
+            ->assertJsonMissing(['id' => $this->citizen->id]);
+
+        $this->actingAs($this->agent, 'api')
+            ->getJson('/api/agents')
+            ->assertForbidden();
+
+        $this->actingAs($this->citizen, 'api')
+            ->getJson('/api/agents')
+            ->assertForbidden();
+    }
+
     public function test_agent_only_sees_and_updates_their_assignments(): void
     {
         $ownAssignment = Assignment::create([
